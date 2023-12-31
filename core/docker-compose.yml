@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  app: #image name
+    build: . #path the Dockerfile here we use .
+    volumes:
+      - .:/core
+    ports:
+      - 8000:8000
+    image: app #application name
+    container_name: django_container
+    command: python manage.py runserver 0.0.0.0:8000
