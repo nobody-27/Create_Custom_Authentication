@@ -19,17 +19,17 @@ class Login(APIView):
         password = user_obj.get('password')
 
         user_attributes = [
-                {'Name': 'email', 'Value': placeholder_email},
+                {'Name': 'email', 'Value': 'placeholder_email'},
                 {'Name': 'email_verified', 'Value': 'True'},
             ]
 
-            response = cognito_client.admin_create_user(
-                UserPoolId=user_pool_id,
-                Username=username,
-                TemporaryPassword=password,
-                UserAttributes=user_attributes,
-                ForceAliasCreation=False,
-            )
+        response = cognito_client.admin_create_user(
+            UserPoolId=user_pool_id,
+            Username=username,
+            TemporaryPassword=password,
+            UserAttributes=user_attributes,
+            ForceAliasCreation=False,
+        )
         
 
         pass
