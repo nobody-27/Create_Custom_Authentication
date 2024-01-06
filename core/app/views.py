@@ -26,16 +26,22 @@ class Login(APIView):
         user = request.GET.get('username')
         passw = request.GET.get('password')
 
-        user = authenticate(username=user, password=passw)
-        if not user is None:
-            if user.cog_user:
-                print("call token function")
-
-            registered_user = self.create_cognito_user({'username':user,'password':passw})
+        try:
+            "run login congnito pass user name and pass"
+            "return access token and refersh token"
 
 
+            return Response({})
+        except:
+            """ run django login funtion """
+            user = authenticate(username=user, password=passw)
+            if not user is None:
+                if user.cog_user:
+                    print("call token function")
+                registered_user = self.create_cognito_user({'username':user,'password':passw})
 
-        return Response({"message":"your are login"})
+            return Response({"message":"user not exits"})
+
 
 
 class Home(APIView):
