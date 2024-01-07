@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework.response import Response, JsonResponse
+from rest_framework.response import Response
 from app.models import User
 import boto3
 from botocore.exceptions import ClientError
@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate, login
 # Create your views here.
 from django.conf import settings
 from datetime import datetime, timedelta
+from app.serializers import LoginSerializer
 
 cognito_region = settings.AWS_REGION
 client_id = settings.COGNITO_APP_CLIENT_ID
@@ -16,11 +17,10 @@ cognito_client = boto3.client('cognito-idp', region_name=cognito_region)
 
 
 class Login(APIView):
+    serializer_class = LoginSerializer
 
-    def get_token(self,username,password):
-        pass
-        
     def create_cognito_user(self, username, password, user_instance):
+        print("run1")
         
         user_attributes = [
                 {'Name': 'email', 'Value': username},
@@ -35,12 +35,15 @@ class Login(APIView):
                 ForceAliasCreation=False,
             )
             if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                print("run2")
                 return True
                 
         except cognito_client.exceptions.InvalidPasswordException as e:
+            print("run4")
             # return Response({'success': False, 'message': 'Invalid Password.'}) 
             print("Invalid_Password_Exception : ", e)     
         except ClientError as e:
+            print("run5")
             print("botocore_client_error : ", e)
             return False
         
@@ -74,68 +77,39 @@ class Login(APIView):
                 refresh_token = response['AuthenticationResult']['RefreshToken']
                 expires_in_seconds = response['AuthenticationResult'].get(
                     'ExpiresIn')
-
                 expiration_time = datetime.now() + timedelta(seconds=expires_in_seconds)
-
-                
-
                 data = {
                     'expires_in': expiration_time.strftime('%Y-%m-%d %H:%M:%S'),
-                    # 'user_type': user_type,
                     'access_token': access_token,
                     'refresh_token': refresh_token
                 }
                 return data
         except cognito_client.exceptions.InvalidPasswordException as e:
-            # return Response({'success': False, 'message': 'Invalid Password.'}) 
             print("Invalid_Password_Exception : ", e)     
         except ClientError as e:
             print("botocore_client_error : ", e)
             return False
 
     def post(self, request):
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        try:
-            data = self.get_user_auth(username, password)
-            if data != False:
-                return JsonResponse({'success': True, 'data': data})
-        except:
-            user_instance = User.objects.get(username=username, password=password)
-            
-            if user_instance:
-                success = self.create_cognito_user(username, password)
-                if success == True:
-                    data = self.get_user_auth(username, password)
-                    if data != False:
-                        return JsonResponse({'success': True, 'data': data})
-                else:
-                    return Response({'success': False, 'message': 'Failed to create Cognito user.'})
-
+        serilizer =  LoginSerializer(data=request.data)
+        if serilizer.is_valid():
+            username = serilizer.validated_data.get('username')
+            password = serilizer.validated_data.get('password')
+            try:
+                data = self.get_user_auth(username, password)
+                if data != False:
+                    return Response({'success': True, 'data': data})
+            except:
+                user = authenticate(username=username, password=password)
+                if user is not None:
+                    success = self.create_cognito_user(username, password)
+                    if success == True:
+                        data = self.get_user_auth(username, password)
+                        if data != False:
+                            return Response({'success': True, 'data': data})
+                    else:
+                        return Response({'success': False, 'message': 'Failed to create Cognito user.'})
         return Response({'success': False,'message': 'User Not Found.'})
-
-    
-    
-    def get(self,request):
-        user = request.GET.get('username')
-        passw = request.GET.get('password')
-
-        try:
-            "run login congnito pass user name and pass"
-            "return access token and refersh token"
-
-
-            return Response({})
-        except:
-            """ run django login funtion """
-            user = authenticate(username=user, password=passw)
-            if not user is None:
-                if user.cog_user:
-                    print("call token function")
-                registered_user = self.create_cognito_user({'username':user,'password':passw})
-
-            return Response({"message":"user not exits"})
-
 
 
 class Home(APIView):
