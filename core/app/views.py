@@ -19,7 +19,7 @@ cognito_client = boto3.client('cognito-idp', region_name=cognito_region)
 class Login(APIView):
     serializer_class = LoginSerializer
 
-    def create_cognito_user(self, username, password, user_instance):
+    def create_cognito_user(self, username, password, user_instance=None):
         print("run1")
         
         user_attributes = [
@@ -85,7 +85,8 @@ class Login(APIView):
                 }
                 return data
         except cognito_client.exceptions.InvalidPasswordException as e:
-            print("Invalid_Password_Exception : ", e)     
+            print("Invalid_Password_Exception : ", e)  
+            return False
         except ClientError as e:
             print("botocore_client_error : ", e)
             return False
@@ -95,11 +96,11 @@ class Login(APIView):
         if serilizer.is_valid():
             username = serilizer.validated_data.get('username')
             password = serilizer.validated_data.get('password')
-            try:
-                data = self.get_user_auth(username, password)
-                if data != False:
-                    return Response({'success': True, 'data': data})
-            except:
+            
+            data = self.get_user_auth(username, password)
+            if data != False:
+                return Response({'success': True, 'data': data})
+            else:
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     success = self.create_cognito_user(username, password)
@@ -109,6 +110,7 @@ class Login(APIView):
                             return Response({'success': True, 'data': data})
                     else:
                         return Response({'success': False, 'message': 'Failed to create Cognito user.'})
+                    
         return Response({'success': False,'message': 'User Not Found.'})
 
 
