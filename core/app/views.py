@@ -9,12 +9,25 @@ from django.contrib.auth import authenticate, login
 from django.conf import settings
 from datetime import datetime, timedelta
 from app.serializers import LoginSerializer
+import hashlib
 
 cognito_region = settings.AWS_REGION
 client_id = settings.COGNITO_APP_CLIENT_ID
 user_pool_id = settings.COGNITO_USER_POOL_ID
 cognito_client = boto3.client('cognito-idp', region_name='us-east-1')
 
+
+def hash_string(input_string):
+    # Create a SHA-256 hash object
+    sha256_hash = hashlib.sha256()
+
+    # Update the hash object with the bytes of the input string
+    sha256_hash.update(input_string.encode('utf-8'))
+
+    # Get the hexadecimal representation of the hash
+    hashed_string = sha256_hash.hexdigest()
+
+    return hashed_string
 
 class Login(APIView):
     serializer_class = LoginSerializer
@@ -23,6 +36,7 @@ class Login(APIView):
         print("run1")
         
         email_value = f'{username}@qr4order.com'
+        password = hash_string(password)
         
         user_attributes = [
                 {'Name': 'email', 'Value': email_value},
