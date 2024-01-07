@@ -13,7 +13,7 @@ from app.serializers import LoginSerializer
 cognito_region = settings.AWS_REGION
 client_id = settings.COGNITO_APP_CLIENT_ID
 user_pool_id = settings.COGNITO_USER_POOL_ID
-cognito_client = boto3.client('cognito-idp', region_name=cognito_region)
+cognito_client = boto3.client('cognito-idp', region_name='us-east-1')
 
 
 class Login(APIView):
@@ -22,8 +22,10 @@ class Login(APIView):
     def create_cognito_user(self, username, password, user_instance=None):
         print("run1")
         
+        email_value = f'{username}@qr4order.com'
+        
         user_attributes = [
-                {'Name': 'email', 'Value': username},
+                {'Name': 'email', 'Value': email_value},
                 {'Name': 'email_verified', 'Value': 'True'},
             ]
         try:
@@ -92,6 +94,7 @@ class Login(APIView):
             return False
 
     def post(self, request):
+        
         serilizer =  LoginSerializer(data=request.data)
         if serilizer.is_valid():
             username = serilizer.validated_data.get('username')
