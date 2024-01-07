@@ -36,7 +36,7 @@ class Login(APIView):
         print("run1")
         
         email_value = f'{username}@qr4order.com'
-        password = hash_string(password)
+        hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
         
         user_attributes = [
                 {'Name': 'email', 'Value': email_value},
@@ -46,7 +46,7 @@ class Login(APIView):
             response = cognito_client.admin_create_user(
                 UserPoolId=user_pool_id,
                 Username=username,
-                TemporaryPassword=password,
+                TemporaryPassword=hashed_password,
                 UserAttributes=user_attributes,
                 ForceAliasCreation=False,
             )
@@ -66,12 +66,13 @@ class Login(APIView):
     def get_user_auth(self, username, password,): 
         
         try:   
+            hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
             response = cognito_client.initiate_auth(
                 ClientId=client_id,
                 AuthFlow='USER_PASSWORD_AUTH',
                 AuthParameters={
                     'USERNAME': username,
-                    'PASSWORD': password
+                    'PASSWORD': hashed_password
                 }
             )
 
