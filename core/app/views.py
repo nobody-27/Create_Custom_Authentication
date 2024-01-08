@@ -34,9 +34,10 @@ class Login(APIView):
 
     def create_cognito_user(self, username, password, user_instance=None):
         print("run1")
+
+        password = f'{password}_test123'
         
         email_value = f'{username}@qr4order.com'
-        hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
         
         user_attributes = [
                 {'Name': 'email', 'Value': email_value},
@@ -46,7 +47,7 @@ class Login(APIView):
             response = cognito_client.admin_create_user(
                 UserPoolId=user_pool_id,
                 Username=username,
-                TemporaryPassword=hashed_password,
+                TemporaryPassword=password,
                 UserAttributes=user_attributes,
                 ForceAliasCreation=False,
             )
@@ -58,21 +59,25 @@ class Login(APIView):
             print("run4")
             # return Response({'success': False, 'message': 'Invalid Password.'}) 
             print("Invalid_Password_Exception : ", e)     
+            return False
         except ClientError as e:
             print("run5")
             print("botocore_client_error : ", e)
             return False
         
-    def get_user_auth(self, username, password,): 
+    def get_user_auth(self, username, password):
+        print("login1..") 
+
+        password =  f'{password}_test123'
         
         try:   
-            hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
+            
             response = cognito_client.initiate_auth(
                 ClientId=client_id,
                 AuthFlow='USER_PASSWORD_AUTH',
                 AuthParameters={
                     'USERNAME': username,
-                    'PASSWORD': hashed_password
+                    'PASSWORD': password
                 }
             )
 
